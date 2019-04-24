@@ -1,0 +1,31 @@
+## Done (20190327 - 20190402)
+
+- Double Click에 대한 View 처리
+  - Double Click 시 (1) 첫 번째 click에 대한 Mouse Release, (2) Double Click, (3) 두 번째 Click에 대한 Mouse Release가 순차적으로 호출됨.
+  - Mouse Release 시 notifyClick을 통해 toggle이 되기 때문에 Double Click을 하면 toggle이 두 번 이뤄지게 되는데, taf의 setNotifyOnClick을 true로 setting하면 notify가 1회만 호출됨.
+  - 이 경우, Untoggle 상태에서 Double Click할 때는 원하는 대로 잘 되지만, 반대로 전환할 때는 Toggle이 풀리게 됨. 따라서 추가적인 처리가 필요함. (Todo)
+- Double Click 용 Button Listener 구현
+  - Ribbon Click/Double Click/Release 때 CustomButton이 갖고 있는 Listener와 EventDelegate, StateDelegate에서 Click 동작에 따른 세부 구현이 정의됨.
+  - 이 중 Double Click 시에는 Listener를 달아주지 않았는데, Double Clickable Toggle Button이라면 전용 listener를 달아줘 Toggle 상태를 지정할 수 있도록 구현.  
+  - 구체적으로, Double Clickable 관련 Attribute를 만들어 XML Parsing 때 Button에 새로운 Listener를 달도록 함.
+- Single Click / Double Click 용 서식 복사 Event Handler Chain을 개별적으로 구성
+  - Default Chain으로 돌아가게 하는 Event Handler를 만들어 Single Click일 때 Chain과 Double Click일 때 Chain을 다르게 구성.
+  - Single Click일 때 : 기존 서식 복사 Event Handler 들 + 서식 복사 Command Observer + Default Chain으로 돌아가도록 만들어주는 Event Handler.
+  - Double Click일 때 : 기존 서식 복사 Event Handler 들 + 서식 복사 Command Observer.
+  - 서식 복사 Command Observer의 구현 : 서식 복사 Ribbon을 수동으로 눌렀을 때만 Default Chain으로 넘어가도록 구현 (Single Click일 때는 어차피 Default Chain으로 돌아가도록 유도되기 때문)
+  - 단, Chain의 분기를 누가 나누느냐는 아직 논의 중.
+    - (1) Button Listener가 할 경우:
+      - 장점: 구현이 빠름
+      - 단점: View의 Listener가 Event Handler Chain을 분기해준다는 것이 일반적인 설계는 아님.
+    - (2) Command Observer가 할 경우: Command가 실행될 때 PreExecute으로 먼저 불리므로, Single Click과 Double Click을 구분하여 Chain을 다르게 끼워줄 수 있을 것.
+      - 장점: 현재 구조를 크게 바꾸지 않고 진행할 수 있음.
+      - 단점: Single Click과 Double Click을 구분하는 Logic이 Command Observer에 구현되어야 하는데, Single 2번인지, Double 1번인지 구분하는 Logic이 필요함. 
+
+## Todo
+
+- Event Handler Chain 분기에 대한 처리
+- Toggle된 상태에서 Double Click할 때 toggle->untoggle->toggle 한 것 처럼 보이게 되는 문제.
+- TW LineBlock 관련 동작은 일반 Text 동작과 다른 Chain을 구성하고 있는데, 일반적인 상황에 대한 처리가 끝난 후 확인이 필요.
+- 기타
+  - SelectionModel update 시 Command Execute Call을 부르는 이상 동작들이 몇개 발견됨
+  - RibbonBar의 setProperty가 호출되는데, 이 때 내부적으로 NormalRibbon의 setProperty가 한 번 더 불리는 동작이 있음. (CellSelectionModel 등에서도 강제로 Command Execute를 시켜주는 잘못된 동작이 있음)
